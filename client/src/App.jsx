@@ -13,7 +13,9 @@ import Navbar from "./components/Navbar";
 
 // Create an HTTP link.
 const httpLink = createHttpLink({
-  uri: "http://localhost:3001/graphql",
+  uri: import.meta.env.PROD
+    ? "/graphql" // In production, use relative path.
+    : "http://localhost:3001/graphql", // In development, use localhost.
 });
 
 // Create an auth link.
