@@ -13,7 +13,7 @@ import Navbar from "./components/Navbar";
 
 // Create an HTTP link.
 const httpLink = createHttpLink({
-  uri: "/graphql",
+  uri: "http://localhost:3001/graphql",
 });
 
 // Create an auth link.

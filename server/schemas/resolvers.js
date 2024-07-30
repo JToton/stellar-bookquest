@@ -16,30 +16,31 @@ const resolvers = {
 
   Mutation: {
     addUser: async (parent, { username, email, password }) => {
-      const user = await User.create({ username, email, password });
-      const token = signToken(user);
-      return { token, user };
-    },
-    login: async (parent, { email, password }) => {
-      const user = await User.findOne({ email });
-
-      if (!user) {
-        throw new GraphQLError("No user found with this email address", {
-          extensions: { code: "UNAUTHENTICATED" },
-        });
+      try {
+        const user = await User.create({ username, email, password });
+        const token = signToken(user);
+        return { token, user };
+      } catch (err) {
+        // Console log to locate bug.
+        console.error("Error in addUser resolver:", err);
+        if (err.name === "ValidationError") {
+          throw new GraphQLError("Validation error. Please check your input.", {
+            extensions: {
+              code: "BAD_USER_INPUT",
+              validationErrors: err.errors,
+            },
+          });
+        } else if (err.code === 11000) {
+          // Duplicate key error.
+          throw new GraphQLError("A user with this email already exists.", {
+            extensions: { code: "USER_EXISTS" },
+          });
+        } else {
+          throw new GraphQLError("Failed to create user", {
+            extensions: { code: "INTERNAL_SERVER_ERROR", error: err.message },
+          });
+        }
       }
-
-      const correctPw = await user.isCorrectPassword(password);
-
-      if (!correctPw) {
-        throw new GraphQLError("Incorrect credentials", {
-          extensions: { code: "UNAUTHENTICATED" },
-        });
-      }
-
-      const token = signToken(user);
-
-      return { token, user };
     },
     saveBook: async (parent, { input }, context) => {
       if (context.user) {

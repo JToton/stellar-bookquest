@@ -2,6 +2,7 @@ const express = require("express");
 const { ApolloServer } = require("@apollo/server");
 const { expressMiddleware } = require("@apollo/server/express4");
 const path = require("path");
+const cors = require("cors"); // Added CORS middleware.
 
 const { typeDefs, resolvers } = require("./schemas");
 const db = require("./config/connection");
@@ -18,6 +19,7 @@ async function startApolloServer() {
 
   await server.start();
 
+  app.use(cors()); // Added CORS middleware.
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
 
@@ -28,7 +30,7 @@ async function startApolloServer() {
     })
   );
 
-  // if we're in production, serve client/build as static assets
+  // if we're in production, serve client/build as static assets.
   if (process.env.NODE_ENV === "production") {
     app.use(express.static(path.join(__dirname, "../client/build")));
 
@@ -45,4 +47,6 @@ async function startApolloServer() {
   });
 }
 
-startApolloServer();
+startApolloServer().catch((error) => {
+  console.error("Failed to start the server:", error);
+});
