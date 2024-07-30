@@ -15,14 +15,12 @@ const SavedBooks = () => {
 
   // create function that accepts the book's mongo _id value as param and deletes the book from the database.
   const handleDeleteBook = async (bookId) => {
-    const token = Auth.loggedIn() ? Auth.getToken() : null;
-
-    if (!token) {
+    if (!Auth.loggedIn()) {
       return false;
     }
 
     try {
-      await removeBook({
+      const { data } = await removeBook({
         variables: { bookId },
         update: (cache) => {
           const { me } = cache.readQuery({ query: GET_ME });
@@ -40,8 +38,13 @@ const SavedBooks = () => {
         },
       });
 
-      // upon success, remove book's id from localStorage.
-      removeBookId(bookId);
+      // Check if the mutation was successful.
+      if (data && data.removeBook) {
+        // upon success, remove book's id from localStorage.
+        removeBookId(bookId);
+      } else {
+        throw new Error("Failed to remove book");
+      }
     } catch (err) {
       console.error(err);
     }
@@ -54,7 +57,7 @@ const SavedBooks = () => {
 
   return (
     <>
-      <div fluid className="text-light bg-dark p-5">
+      <div className="text-light bg-dark p-5 container-fluid">
         <Container>
           <h1>Viewing saved books!</h1>
         </Container>

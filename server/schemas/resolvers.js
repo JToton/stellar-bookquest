@@ -42,6 +42,34 @@ const resolvers = {
         }
       }
     },
+    login: async (parent, { email, password }) => {
+      try {
+        const user = await User.findOne({ email });
+
+        if (!user) {
+          throw new GraphQLError("Incorrect credentials", {
+            extensions: { code: "UNAUTHENTICATED" },
+          });
+        }
+
+        const correctPw = await user.isCorrectPassword(password);
+
+        if (!correctPw) {
+          throw new GraphQLError("Incorrect credentials", {
+            extensions: { code: "UNAUTHENTICATED" },
+          });
+        }
+
+        const token = signToken(user);
+
+        return { token, user };
+      } catch (err) {
+        console.error("Login error:", err);
+        throw new GraphQLError(err.message, {
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
+        });
+      }
+    },
     saveBook: async (parent, { input }, context) => {
       if (context.user) {
         const updatedUser = await User.findByIdAndUpdate(

@@ -6,7 +6,7 @@ import Auth from "../utils/auth";
 
 const LoginForm = () => {
   const [userFormData, setUserFormData] = useState({ email: "", password: "" });
-  const [validated] = useState(false);
+  const [validated, setValidated] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 
   const [login, { error }] = useMutation(LOGIN_USER);
@@ -26,12 +26,18 @@ const LoginForm = () => {
       event.stopPropagation();
     }
 
+    setValidated(true);
+
     try {
       const { data } = await login({
         variables: { ...userFormData },
       });
 
-      Auth.login(data.login.token);
+      if (data && data.login && data.login.token) {
+        Auth.login(data.login.token);
+      } else {
+        throw new Error("Login failed");
+      }
     } catch (err) {
       console.error(err);
       setShowAlert(true);
@@ -52,12 +58,14 @@ const LoginForm = () => {
           show={showAlert}
           variant="danger"
         >
-          Something went wrong with your login credentials!
+          {error
+            ? error.message
+            : "Something went wrong with your login credentials!"}
         </Alert>
         <Form.Group className="mb-3">
           <Form.Label htmlFor="email">Email</Form.Label>
           <Form.Control
-            type="text"
+            type="email"
             placeholder="Your email"
             name="email"
             onChange={handleInputChange}
